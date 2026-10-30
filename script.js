@@ -16,6 +16,9 @@ const endingArtwork = document.getElementById("endingArtwork");
 const nextDayScreen = document.getElementById("nextDayScreen");
 const nextDayMessage = document.getElementById("nextDayMessage");
 const continueButton = document.getElementById("continueButton");
+const sickEndingSound = document.getElementById("sickEndingSound");
+const gameMusic = document.getElementById("gameMusic");
+const nextDaySound = document.getElementById("nextDaySound");
 const collectButton = document.getElementById("collectButton");
 const confettiContainer = document.getElementById("confettiContainer");
 
@@ -79,6 +82,7 @@ continueButton.addEventListener("click", () => {
     timeLeft = difficultySettings[currentDifficulty].time;
     timerText.textContent = timeLeft;
     gameRunning = true;
+    startGameMusic();
     startGameTimer();
     animate();
 });
@@ -206,9 +210,17 @@ function startGame(){
     gameScreen.style.setProperty("--illness-intensity", "0");
     updateCollectionPercentages();
 
+    startGameMusic();
     startGameTimer();
 
     animate();
+}
+
+function startGameMusic(){
+    gameMusic.currentTime = 0;
+    gameMusic.play().catch((error)=>{
+        console.error("Could not play the game music.", error);
+    });
 }
 
 function startGameTimer(){
@@ -240,6 +252,7 @@ function endGame(message = ""){
 
     gameRunning = false;
     clearInterval(gameTimer);
+    gameMusic.pause();
 
     gameScreen.classList.add("hidden");
 
@@ -249,6 +262,7 @@ function endGame(message = ""){
     const sickEnding = Boolean(message);
     gameOverScreen.classList.toggle("sick-ending", sickEnding);
     gameOverScreen.classList.toggle("timeout-ending", !won && !sickEnding);
+    gameOverScreen.classList.toggle("winning-ending", won);
     endingArtwork.src = won
         ? "img./good ending.png"
         : sickEnding ? "img./sick ending.png" : "";
@@ -256,13 +270,20 @@ function endGame(message = ""){
         ? "Illustration of a person outdoors after recovering"
         : sickEnding ? "Illustration of a sick person lying in bed" : "";
 
+    if(sickEnding){
+        sickEndingSound.currentTime = 0;
+        sickEndingSound.play().catch((error)=>{
+            console.error("Could not play the sick ending sound.", error);
+        });
+    }
+
     if(message){
         resultText.textContent = message;
     }
     else if(won){
 
         resultText.textContent =
-            "You completed all 3 levels and collected 100% water!";
+            "Good Job! You and your family were one of the lucky ones to not get sick. But how much longer can you keep this up?";
         launchConfetti();
 
     }
@@ -330,9 +351,14 @@ function completeCurrentLevel(){
 function showNextDayScreen(){
     gameRunning = false;
     clearInterval(gameTimer);
+    gameMusic.pause();
     gameScreen.classList.add("hidden");
     nextDayMessage.textContent = `Level ${currentLevel} is ready.`;
     nextDayScreen.classList.remove("hidden");
+    nextDaySound.currentTime = 0;
+    nextDaySound.play().catch((error)=>{
+        console.error("Could not play the next day sound.", error);
+    });
 }
 
 /* ------------------------- */

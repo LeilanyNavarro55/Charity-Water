@@ -68,6 +68,18 @@ h1{
     min-width:140px;
 }
 
+.difficulty-options button[data-difficulty="easy"]:hover{
+    text-shadow:0 0 8px #00a83b, 0 0 16px #00a83b;
+}
+
+.difficulty-options button[data-difficulty="normal"]:hover{
+    text-shadow:0 0 8px #168cff, 0 0 16px #168cff;
+}
+
+.difficulty-options button[data-difficulty="hard"]:hover{
+    text-shadow:0 0 8px #ed2939, 0 0 16px #ed2939;
+}
+
 #gameOver h1{
     max-width: min(900px, calc(100vw - 32px));
     margin-bottom:16px;
@@ -111,6 +123,40 @@ h1{
 
 #gameOver.timeout-ending .ending-art{
     display:none;
+}
+
+#gameOver .ending-link{
+    position:absolute;
+    bottom:clamp(20px, 5vh, 48px);
+    left:50%;
+    z-index:4;
+    padding:12px 22px;
+    transform:translateX(-50%);
+    border:2px solid #ffc907;
+    border-radius:999px;
+    background:#003366;
+    color:#fff7e1;
+    font-size:clamp(1rem, 3vw, 1.25rem);
+    font-weight:bold;
+    text-align:center;
+    text-decoration:none;
+    text-shadow:0 0 8px #ffc907, 0 0 16px #ffc907;
+    box-shadow:0 0 12px #ffc907, 0 0 24px rgb(255 201 7 / 70%);
+    animation:hope-glow 1.8s ease-in-out infinite alternate;
+}
+
+#gameOver .ending-link:hover,
+#gameOver .ending-link:focus-visible{
+    box-shadow:0 0 18px #ffc907, 0 0 36px #ffc907;
+}
+
+#gameOver:not(.winning-ending) .ending-link{
+    display:none;
+}
+
+@keyframes hope-glow{
+    from{ box-shadow:0 0 10px #ffc907, 0 0 20px rgb(255 201 7 / 65%); }
+    to{ box-shadow:0 0 18px #ffc907, 0 0 34px rgb(255 201 7 / 90%); }
 }
 
 #gameOver .ending-content h1{
@@ -261,5 +307,9 @@ canvas{
     #gameScreen::after{
         animation:none;
         opacity:1;
+    }
+
+    #gameOver .ending-link{
+        animation:none;
     }
 }
