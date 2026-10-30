@@ -12,6 +12,7 @@ const healthText = document.getElementById("health");
 
 const gameOverScreen = document.getElementById("gameOver");
 const resultText = document.getElementById("resultText");
+const endingArtwork = document.getElementById("endingArtwork");
 const collectButton = document.getElementById("collectButton");
 const confettiContainer = document.getElementById("confettiContainer");
 
@@ -37,8 +38,8 @@ const difficultySettings = {
 };
 
 const levelSettings = [
-    { waterTarget: 34, bacteriaCount: 30 },
-    { waterTarget: 67, bacteriaCount: 60 },
+    { waterTarget: 100, bacteriaCount: 30 },
+    { waterTarget: 100, bacteriaCount: 60 },
     { waterTarget: 100, bacteriaCount: 150 }
 ];
 
@@ -166,6 +167,8 @@ window.addEventListener("blur", ()=>{
 
 function startGame(){
 
+    if(gameRunning) return;
+
     waterCollected = 0;
     bacteriaCollected = 0;
     health = 100;
@@ -226,10 +229,18 @@ function endGame(message = ""){
 
     gameOverScreen.classList.remove("hidden");
 
+    const won = !message && waterCollected >= 100;
+    endingArtwork.src = won
+        ? "img./good ending.png"
+        : "img./sick ending.png";
+    endingArtwork.alt = won
+        ? "Illustration of a person outdoors after recovering"
+        : "Illustration of a sick person lying in bed";
+
     if(message){
         resultText.textContent = message;
     }
-    else if(waterCollected >= 100){
+    else if(won){
 
         resultText.textContent =
             "You completed all 3 levels and collected 100% water!";
@@ -272,7 +283,10 @@ function launchConfetti(){
 function setLevel(level){
 
     currentLevel = level;
+    waterCollected = 0;
     levelText.textContent = `${currentLevel} / ${levelSettings.length}`;
+
+    updateCollectionPercentages();
 
     if(currentLevel >= 2){
         updateHealth();
@@ -390,7 +404,7 @@ function updateParticles(){
 
                 if(p.type === "water"){
 
-                    waterCollected = Math.min(100, waterCollected + 1);
+                    waterCollected = Math.min(100, waterCollected + 2);
 
                     if(currentLevel < levelSettings.length
                         && waterCollected >= levelSettings[currentLevel - 1].waterTarget){
@@ -400,7 +414,7 @@ function updateParticles(){
                 }
                 else{
 
-                    bacteriaCollected = Math.min(100, bacteriaCollected + 5);
+                    bacteriaCollected = Math.min(100, bacteriaCollected + 3);
 
                 }
 
