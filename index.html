@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Collector</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- TITLE SCREEN -->
+
+    <div id="titleScreen" class="screen">
+
+        <img
+            id="charityWaterLogo"
+            src="img./143-1435214_charity-water-charity-water-logo-png.png"
+            alt="charity: water logo"
+        >
+
+        <h1>Every Drop Counts</h1>
+
+        <button id="playBtn">Play</button>
+
+    </div>
+
+
+    <!-- DIFFICULTY SCREEN -->
+
+    <div id="difficultyScreen" class="screen hidden">
+
+        <h1>Choose your difficulty</h1>
+
+        <div class="difficulty-options">
+            <button type="button" data-difficulty="easy">Easy</button>
+            <button type="button" data-difficulty="normal">Normal</button>
+            <button type="button" data-difficulty="hard">Hard</button>
+        </div>
+
+    </div>
+
+
+    <!-- GAME SCREEN -->
+
+    <div id="gameScreen" class="screen hidden">
+
+        <div id="hud">
+
+            <div>Time: <span id="timer">60</span></div>
+
+            <div>Water: <span id="waterCount">0%</span></div>
+
+            <div>Bacteria: <span id="bacteriaCount">0%</span></div>
+
+            <div>Health: <span id="health">100</span>%</div>
+
+        </div>
+
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+
+        <p class="instructions">
+            Collect water with E or the button. Avoid red virus particles!
+        </p>
+
+        <button id="collectButton" type="button">Hold to Collect Water</button>
+
+    </div>
+
+
+    <!-- GAME OVER -->
+
+    <div id="gameOver" class="screen hidden">
+
+        <h1 id="resultText"></h1>
+
+        <button onclick="location.reload()">
+            Play Again
+        </button>
+
+    </div>
+
+    <div id="confettiContainer" class="confetti-container" aria-hidden="true"></div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
