@@ -5,6 +5,7 @@ const playBtn = document.getElementById("playBtn");
 const difficultyButtons = document.querySelectorAll("[data-difficulty]");
 
 const timerText = document.getElementById("timer");
+const levelText = document.getElementById("levelCount");
 const waterText = document.getElementById("waterCount");
 const bacteriaText = document.getElementById("bacteriaCount");
 const healthText = document.getElementById("health");
@@ -27,12 +28,19 @@ let health = 100;
 let timeLeft = 60;
 let gameTimer;
 let currentDifficulty = "normal";
+let currentLevel = 1;
 
 const difficultySettings = {
     easy: { time: 90, virusSpeed: 0.7, virusSpawnChance: 0.01 },
     normal: { time: 60, virusSpeed: 1, virusSpawnChance: 0.02 },
     hard: { time: 45, virusSpeed: 1.5, virusSpawnChance: 0.04 }
 };
+
+const levelSettings = [
+    { waterTarget: 34, bacteriaCount: 30 },
+    { waterTarget: 67, bacteriaCount: 60 },
+    { waterTarget: 100, bacteriaCount: 150 }
+];
 
 const particles = [];
 
@@ -106,19 +114,6 @@ function createParticle(type){
 
 }
 
-for(let i = 0; i < 70; i++){
-
-    createParticle("water");
-
-}
-
-for(let i = 0; i < 30; i++){
-
-    createParticle("bacteria");
-
-}
-
-
 /* ------------------------- */
 /* CONTROLS */
 /* ------------------------- */
@@ -171,9 +166,23 @@ window.addEventListener("blur", ()=>{
 
 function startGame(){
 
+    waterCollected = 0;
+    bacteriaCollected = 0;
+    health = 100;
+    currentLevel = 1;
+    particles.length = 0;
+
+    for(let i = 0; i < 70; i++){
+        createParticle("water");
+    }
+
+    setLevel(1);
+
     gameRunning = true;
     timeLeft = difficultySettings[currentDifficulty].time;
     timerText.textContent = timeLeft;
+    healthText.textContent = health;
+    canvas.style.filter = "";
     updateCollectionPercentages();
 
     gameTimer = setInterval(()=>{
@@ -216,7 +225,7 @@ function endGame(message = ""){
     else if(waterCollected >= 100){
 
         resultText.textContent =
-            "You collected 100% water!";
+            "You completed all 3 levels and collected 100% water!";
         launchConfetti();
 
     }
@@ -253,6 +262,19 @@ function launchConfetti(){
     }
 }
 
+function setLevel(level){
+
+    currentLevel = level;
+    levelText.textContent = `${currentLevel} / ${levelSettings.length}`;
+
+    const bacteriaCount = particles.filter(
+        (particle) => particle.type === "bacteria"
+    ).length;
+
+    for(let i = bacteriaCount; i < levelSettings[level - 1].bacteriaCount; i++){
+        createParticle("bacteria");
+    }
+}
 
 /* ------------------------- */
 /* DRAW BUCKET */
@@ -342,6 +364,10 @@ function updateParticles(){
 
                     waterCollected = Math.min(100, waterCollected + 1);
 
+                    if(currentLevel < levelSettings.length
+                        && waterCollected >= levelSettings[currentLevel - 1].waterTarget){
+                        setLevel(currentLevel + 1);
+                    }
                 }
                 else{
 
