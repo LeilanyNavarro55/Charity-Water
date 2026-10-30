@@ -31,9 +31,9 @@ let currentDifficulty = "normal";
 let currentLevel = 1;
 
 const difficultySettings = {
-    easy: { time: 90, virusSpeed: 0.7, virusSpawnChance: 0.01 },
-    normal: { time: 60, virusSpeed: 1, virusSpawnChance: 0.02 },
-    hard: { time: 45, virusSpeed: 1.5, virusSpawnChance: 0.04 }
+    easy: { time: 90, virusSpeed: 0.7, virusSpawnChance: 0.01, initialViruses: 0, maxViruses: 1, virusErraticness: 0 },
+    normal: { time: 60, virusSpeed: 1, virusSpawnChance: 0.02, initialViruses: 0, maxViruses: 1, virusErraticness: 0 },
+    hard: { time: 45, virusSpeed: 2, virusSpawnChance: 0.4, initialViruses: 4, maxViruses: 5, virusErraticness: 0.5 }
 };
 
 const levelSettings = [
@@ -178,11 +178,16 @@ function startGame(){
 
     setLevel(1);
 
+    for(let i = 0; i < difficultySettings[currentDifficulty].initialViruses; i++){
+        createParticle("virus");
+    }
+
     gameRunning = true;
     timeLeft = difficultySettings[currentDifficulty].time;
     timerText.textContent = timeLeft;
     healthText.textContent = health;
     canvas.style.filter = "";
+    gameScreen.style.setProperty("--illness-intensity", "0");
     updateCollectionPercentages();
 
     gameTimer = setInterval(()=>{
@@ -194,7 +199,9 @@ function startGame(){
         if(timeLeft <= 0){
             endGame();
         }
-        else if(!particles.some((particle) => particle.type === "virus") && Math.random() < difficultySettings[currentDifficulty].virusSpawnChance){
+        else if(particles.filter((particle) => particle.type === "virus").length
+            < difficultySettings[currentDifficulty].maxViruses
+            && Math.random() < difficultySettings[currentDifficulty].virusSpawnChance){
             createParticle("virus");
         }
 
@@ -267,6 +274,11 @@ function setLevel(level){
     currentLevel = level;
     levelText.textContent = `${currentLevel} / ${levelSettings.length}`;
 
+    if(currentLevel >= 2){
+        updateHealth();
+        if(!gameRunning) return;
+    }
+
     const bacteriaCount = particles.filter(
         (particle) => particle.type === "bacteria"
     ).length;
@@ -285,9 +297,14 @@ function drawBucket(){
     const targetY = collecting
         ? canvas.height - 250
         : canvas.height - 100;
+    let controlResponsiveness = 0.08;
+
+    if(currentLevel >= 2){
+        controlResponsiveness = bacteriaCollected <= 30 ? 0.055 : 0.025;
+    }
 
     bucket.currentY +=
-        (targetY - bucket.currentY) * 0.08;
+        (targetY - bucket.currentY) * controlResponsiveness;
 
     ctx.beginPath();
 
@@ -319,6 +336,17 @@ function updateParticles(){
     particles.forEach((p,index)=>{
 
         if(!gameRunning) return;
+
+        if(p.type === "virus" && difficultySettings[currentDifficulty].virusErraticness > 0){
+            const turn = (Math.random() - 0.5)
+                * difficultySettings[currentDifficulty].virusErraticness;
+            const cosTurn = Math.cos(turn);
+            const sinTurn = Math.sin(turn);
+            const vx = p.vx;
+
+            p.vx = vx * cosTurn - p.vy * sinTurn;
+            p.vy = vx * sinTurn + p.vy * cosTurn;
+        }
 
         p.x += p.vx;
         p.y += p.vy;
@@ -367,21 +395,23 @@ function updateParticles(){
                     if(currentLevel < levelSettings.length
                         && waterCollected >= levelSettings[currentLevel - 1].waterTarget){
                         setLevel(currentLevel + 1);
+                        if(!gameRunning) return;
                     }
                 }
                 else{
 
-                    bacteriaCollected++;
+                    bacteriaCollected = Math.min(100, bacteriaCollected + 5);
 
                 }
+
+                updateHealth();
+                if(!gameRunning) return;
 
                 updateCollectionPercentages();
 
                 particles.splice(index,1);
 
                 createParticle(p.type);
-
-                updateHealth();
 
                 if(waterCollected >= 100){
                     endGame();
@@ -421,17 +451,10 @@ function updateParticles(){
 
 function updateCollectionPercentages(){
 
-    const totalCollected =
-        waterCollected + bacteriaCollected;
-
     const waterPercent = waterCollected;
 
-    const bacteriaPercent = totalCollected > 0
-        ? Math.round((bacteriaCollected / totalCollected) * 100)
-        : 0;
-
     waterText.textContent = `${waterPercent}%`;
-    bacteriaText.textContent = `${bacteriaPercent}%`;
+    bacteriaText.textContent = `${bacteriaCollected}%`;
 }
 
 
@@ -441,28 +464,36 @@ function updateCollectionPercentages(){
 
 function updateHealth(){
 
-    const total =
-        waterCollected +
-        bacteriaCollected;
+    if(currentLevel < 2){
+        health = 100;
+        healthText.textContent = health;
+        canvas.style.filter = "";
+        gameScreen.style.setProperty("--illness-intensity", "0");
+        return;
+    }
 
-    if(total <= 0) return;
-
-    const bacteriaPercent =
-        (bacteriaCollected / total) * 100;
+    if(bacteriaCollected > 50){
+        endGame("Oh no! You got sick and will not be able to collect anymore water for your family.");
+        return;
+    }
 
     health = Math.max(
         0,
-        100 - bacteriaPercent
+        100 - bacteriaCollected
     );
 
     healthText.textContent =
         Math.floor(health);
 
-    const darkness =
-        (100 - health) / 100;
+    const healthLost = (100 - health) / 100;
+    const illnessIntensity = Math.min(1, ((100 - health) / 50) ** 2);
 
     canvas.style.filter =
-        `brightness(${1 - darkness * 0.5})`;
+        `brightness(${1 - healthLost * 0.7})`;
+    gameScreen.style.setProperty(
+        "--illness-intensity",
+        illnessIntensity.toFixed(2)
+    );
 }
 
 
