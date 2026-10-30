@@ -13,6 +13,9 @@ const healthText = document.getElementById("health");
 const gameOverScreen = document.getElementById("gameOver");
 const resultText = document.getElementById("resultText");
 const endingArtwork = document.getElementById("endingArtwork");
+const nextDayScreen = document.getElementById("nextDayScreen");
+const nextDayMessage = document.getElementById("nextDayMessage");
+const continueButton = document.getElementById("continueButton");
 const collectButton = document.getElementById("collectButton");
 const confettiContainer = document.getElementById("confettiContainer");
 
@@ -68,6 +71,16 @@ difficultyButtons.forEach((button) => {
 
     });
 
+});
+
+continueButton.addEventListener("click", () => {
+    nextDayScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    timeLeft = difficultySettings[currentDifficulty].time;
+    timerText.textContent = timeLeft;
+    gameRunning = true;
+    startGameTimer();
+    animate();
 });
 
 
@@ -193,8 +206,13 @@ function startGame(){
     gameScreen.style.setProperty("--illness-intensity", "0");
     updateCollectionPercentages();
 
-    gameTimer = setInterval(()=>{
+    startGameTimer();
 
+    animate();
+}
+
+function startGameTimer(){
+    gameTimer = setInterval(()=>{
         timeLeft--;
 
         timerText.textContent = timeLeft;
@@ -209,8 +227,6 @@ function startGame(){
         }
 
     },1000);
-
-    animate();
 }
 
 
@@ -230,12 +246,15 @@ function endGame(message = ""){
     gameOverScreen.classList.remove("hidden");
 
     const won = !message && waterCollected >= 100;
+    const sickEnding = Boolean(message);
+    gameOverScreen.classList.toggle("sick-ending", sickEnding);
+    gameOverScreen.classList.toggle("timeout-ending", !won && !sickEnding);
     endingArtwork.src = won
         ? "img./good ending.png"
-        : "img./sick ending.png";
+        : sickEnding ? "img./sick ending.png" : "";
     endingArtwork.alt = won
         ? "Illustration of a person outdoors after recovering"
-        : "Illustration of a sick person lying in bed";
+        : sickEnding ? "Illustration of a sick person lying in bed" : "";
 
     if(message){
         resultText.textContent = message;
@@ -302,6 +321,14 @@ function setLevel(level){
     }
 }
 
+function showNextDayScreen(){
+    gameRunning = false;
+    clearInterval(gameTimer);
+    gameScreen.classList.add("hidden");
+    nextDayMessage.textContent = `Level ${currentLevel} is ready.`;
+    nextDayScreen.classList.remove("hidden");
+}
+
 /* ------------------------- */
 /* DRAW BUCKET */
 /* ------------------------- */
@@ -350,6 +377,8 @@ function updateParticles(){
     particles.forEach((p,index)=>{
 
         if(!gameRunning) return;
+
+        let levelAdvanced = false;
 
         if(p.type === "virus" && difficultySettings[currentDifficulty].virusErraticness > 0){
             const turn = (Math.random() - 0.5)
@@ -410,6 +439,7 @@ function updateParticles(){
                         && waterCollected >= levelSettings[currentLevel - 1].waterTarget){
                         setLevel(currentLevel + 1);
                         if(!gameRunning) return;
+                        levelAdvanced = true;
                     }
                 }
                 else{
@@ -426,6 +456,11 @@ function updateParticles(){
                 particles.splice(index,1);
 
                 createParticle(p.type);
+
+                if(levelAdvanced){
+                    showNextDayScreen();
+                    return;
+                }
 
                 if(waterCollected >= 100){
                     endGame();
