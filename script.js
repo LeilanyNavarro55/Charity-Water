@@ -307,18 +307,24 @@ function setLevel(level){
 
     updateCollectionPercentages();
 
-    if(currentLevel >= 2){
-        updateHealth();
-        if(!gameRunning) return;
-    }
-
     const bacteriaCount = particles.filter(
         (particle) => particle.type === "bacteria"
     ).length;
+    const bacteriaTarget = currentDifficulty === "easy"
+        ? levelSettings[0].bacteriaCount
+        : levelSettings[level - 1].bacteriaCount;
 
-    for(let i = bacteriaCount; i < levelSettings[level - 1].bacteriaCount; i++){
+    for(let i = bacteriaCount; i < bacteriaTarget; i++){
         createParticle("bacteria");
     }
+}
+
+function completeCurrentLevel(){
+    health = Math.min(100, Math.max(0, health - bacteriaCollected + 10));
+    bacteriaCollected = 0;
+    updateCollectionPercentages();
+    updateHealth();
+    return gameRunning;
 }
 
 function showNextDayScreen(){
@@ -340,7 +346,7 @@ function drawBucket(){
         : canvas.height - 100;
     let controlResponsiveness = 0.08;
 
-    if(currentLevel >= 2){
+    if(currentDifficulty !== "easy" && currentLevel >= 2){
         controlResponsiveness = bacteriaCollected <= 30 ? 0.055 : 0.025;
     }
 
@@ -377,8 +383,6 @@ function updateParticles(){
     particles.forEach((p,index)=>{
 
         if(!gameRunning) return;
-
-        let levelAdvanced = false;
 
         if(p.type === "virus" && difficultySettings[currentDifficulty].virusErraticness > 0){
             const turn = (Math.random() - 0.5)
@@ -431,15 +435,23 @@ function updateParticles(){
                     return;
                 }
 
+                let levelAdvanced = false;
+
                 if(p.type === "water"){
 
                     waterCollected = Math.min(100, waterCollected + 2);
 
-                    if(currentLevel < levelSettings.length
-                        && waterCollected >= levelSettings[currentLevel - 1].waterTarget){
-                        setLevel(currentLevel + 1);
-                        if(!gameRunning) return;
-                        levelAdvanced = true;
+                    if(waterCollected >= levelSettings[currentLevel - 1].waterTarget){
+                        if(!completeCurrentLevel()) return;
+
+                        if(currentLevel < levelSettings.length){
+                            setLevel(currentLevel + 1);
+                            levelAdvanced = true;
+                        }
+                        else{
+                            endGame();
+                            return;
+                        }
                     }
                 }
                 else{
@@ -447,9 +459,6 @@ function updateParticles(){
                     bacteriaCollected = Math.min(100, bacteriaCollected + 3);
 
                 }
-
-                updateHealth();
-                if(!gameRunning) return;
 
                 updateCollectionPercentages();
 
@@ -513,23 +522,10 @@ function updateCollectionPercentages(){
 
 function updateHealth(){
 
-    if(currentLevel < 2){
-        health = 100;
-        healthText.textContent = health;
-        canvas.style.filter = "";
-        gameScreen.style.setProperty("--illness-intensity", "0");
-        return;
-    }
-
-    if(bacteriaCollected > 50){
+    if(health <= 0){
         endGame("Oh no! You got sick and will not be able to collect anymore water for your family.");
         return;
     }
-
-    health = Math.max(
-        0,
-        100 - bacteriaCollected
-    );
 
     healthText.textContent =
         Math.floor(health);
